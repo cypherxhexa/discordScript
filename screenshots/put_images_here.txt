@@ -1,0 +1,6 @@
+Put your 10-20 screenshot images in this folder!
+
+The bot will automatically pick a random one to attach to your messages.
+Make sure the images are in formats like .jpg, .png, .jpeg, etc.
+
+Since this file is here, GitHub will upload this folder. Just drag and drop your images into this folder when uploading to GitHub.
