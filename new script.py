@@ -20,7 +20,7 @@ ANALYSIS_CHANNEL_ID = os.environ.get("ANALYSIS_CHANNEL_ID", "1297596458337439754
 SCREENSHOT_FOLDER   = os.environ.get("SCREENSHOT_FOLDER", "screenshots") # Put images in 'screenshots' folder
 # Groq model — llama-3.2-3b-preview matches the original llama3.2:3b
 # Other fast options: "llama-3.1-8b-instant", "gemma2-9b-it"
-MODEL_NAME = "llama-3.2-3b-preview"
+MODEL_NAME = "llama-3.1-8b-instant"
 
 # ==================== FAST MODE SETTINGS ====================
 MIN_INTERVAL         = 150   # 2.5 minutes (150 seconds)
