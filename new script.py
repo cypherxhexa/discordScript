@@ -274,26 +274,26 @@ async def get_groq_analysis() -> Optional[str]:
 def get_fallback_analysis() -> str:
     """Simple generic fallbacks — NO PAIR MENTIONS"""
     fallbacks = [
-        "Markets showing steady movement with normal volume.",
-        "Trading in a range with light activity.",
-        "Typical session with nothing unusual.",
-        "Price action looks normal for this time.",
-        "Markets continuing recent patterns.",
-        "Standard trading session underway.",
-        "Nothing out of the ordinary in today's action.",
-        "Markets holding recent levels.",
-        "Consolidation continues as expected.",
-        "Trading within expected parameters.",
-        "Overall market conditions remain stable.",
-        "General sentiment appears balanced.",
-        "Markets exhibiting typical volatility patterns.",
-        "Trading activity at normal levels.",
-        "Market dynamics following expected trends.",
-        "Session progressing within normal ranges.",
-        "Price movements align with expectations.",
-        "Market behavior consistent with recent sessions.",
-        "Trading environment remains constructive.",
-        "Overall market structure holding firm."
+        "Quiet session so far, just letting the setup breathe.",
+        "Nothing worth forcing today, sitting on hands for now.",
+        "Whipsaw action right now. Best to just watch from the sidelines.",
+        "Volume is slowly drying up. Waiting for a real break in structure.",
+        "Classic low-conviction chop. Don't let impatience cost you.",
+        "Holding steady for the moment. The real move hasn't tipped its hand yet.",
+        "Slow grind today. Letting the higher timeframes dictate the bias.",
+        "Just a whole lot of noise at these levels. Patience pays.",
+        "Testing some key zones, but no follow-through volume just yet.",
+        "Market's just breathing right now. Invalidation levels are clear.",
+        "A bit of a dead zone here. No need to step in front of this chop.",
+        "Trend is intact, just a routine consolidation phase right now.",
+        "Boring markets are meant for capital preservation. Staying disciplined.",
+        "Action is pretty muted. Waiting for the market to actually show its hand.",
+        "Classic sideways grind. Sometimes no trade is the best trade.",
+        "Respecting the range until we get a clean close outside of it.",
+        "Looks like we're just building a base here. Keeping risk tight.",
+        "Volume's thin. Easy to get trapped trying to front-run this.",
+        "Just another day of range-bound chop. Keep your charts clean.",
+        "Not much edge in this current chop. Waiting for the dust to settle."
     ]
     return random.choice(fallbacks)
 
@@ -316,11 +316,13 @@ async def get_trading_advice() -> Optional[str]:
         await asyncio.sleep(think_time)
 
         prompt = (
-            "Write a piece of trading advice regarding risk management, market psychology, or strategy. "
-            "It should be 2-3 short paragraphs long. "
-            "Write it casually like an experienced trader sharing thoughts on Discord. "
-            "Do not sound robotic or AI-like. Do not use any emojis. "
-            "Just solid, experienced trading wisdom."
+            "Write a short piece of trading advice focused on risk management, market psychology, or strategy. "
+            "Length: 2–3 short paragraphs only. "
+            "Tone: Casual and slightly blunt, like an experienced trader sharing honest thoughts in a Discord server. "
+            "It must sound human and grounded in real trading experience — not motivational, not academic, not corporate. "
+            "Include at least one realistic scenario such as drawdown, revenge trading, FOMO, overleveraging, or overtrading. "
+            "Avoid generic beginner clichés and avoid overused lines unless explained with depth. "
+            "No emojis. No robotic phrasing. No intro text. Output only the advice."
         )
 
         client = AsyncGroq(api_key=GROQ_API_KEY)
