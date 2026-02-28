@@ -17,6 +17,7 @@ from typing import Optional, Tuple
 USER_TOKEN          = os.environ.get("USER_TOKEN", "")           # Your Discord user token
 GROQ_API_KEY        = os.environ.get("GROQ_API_KEY", "")         # From https://console.groq.com
 ANALYSIS_CHANNEL_ID = os.environ.get("ANALYSIS_CHANNEL_ID", "1297596458337439754")
+ADVICE_CHANNEL_ID   = os.environ.get("ADVICE_CHANNEL_ID", "1216836991942135859")
 SCREENSHOT_FOLDER   = os.environ.get("SCREENSHOT_FOLDER", "screenshots") # Put images in 'screenshots' folder
 # Groq model — llama-3.2-3b-preview matches the original llama3.2:3b
 # Other fast options: "llama-3.1-8b-instant", "gemma2-9b-it"
@@ -27,6 +28,10 @@ MIN_INTERVAL         = 150   # 2.5 minutes (150 seconds)
 MAX_INTERVAL         = 180   # 3 minutes (180 seconds)
 MAX_REQUESTS_PER_HOUR = 24   # ~1 per 2.5 minutes = 24 per hour
 MIN_REQUEST_GAP      = 20    # 20 seconds between requests
+
+# ==================== TRADING ADVICE SETTINGS ====================
+ADVICE_MIN_INTERVAL  = 270   # 4.5 minutes (270 seconds)
+ADVICE_MAX_INTERVAL  = 330   # 5.5 minutes (330 seconds)
 
 # ==================== USER AGENT ROTATION ====================
 USER_AGENTS = [
@@ -292,6 +297,64 @@ def get_fallback_analysis() -> str:
     ]
     return random.choice(fallbacks)
 
+async def get_trading_advice() -> Optional[str]:
+    """Get casually written trading advice (2-3 paragraphs) using Groq cloud API"""
+    if not GROQ_API_KEY:
+        print("[ADVICE AI] No GROQ_API_KEY set — using fallback")
+        return None
+
+    try:
+        from groq import AsyncGroq
+
+        # 30% chance to skip AI and use fallback (keeps messages varied)
+        if random.random() < 0.3:
+            print("[ADVICE AI] Using fallback instead of AI for variety")
+            return None
+
+        think_time = random.uniform(2.5, 4.0)
+        print(f"[ADVICE THINKING] Asking Groq for trading advice ({think_time:.1f}s)...")
+        await asyncio.sleep(think_time)
+
+        prompt = (
+            "Write a piece of trading advice regarding risk management, market psychology, or strategy. "
+            "It should be 2-3 short paragraphs long. "
+            "Write it casually like an experienced trader sharing thoughts on Discord. "
+            "Do not sound robotic or AI-like. Do not use any emojis. "
+            "Just solid, experienced trading wisdom."
+        )
+
+        client = AsyncGroq(api_key=GROQ_API_KEY)
+        response = await client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=300,
+            temperature=0.7,
+            top_p=0.8
+        )
+
+        text = response.choices[0].message.content
+        cleaned = clean_text(text)
+
+        if cleaned and len(cleaned.strip()) > 50:
+            print(f"[ADVICE] Groq generated advice.")
+            return cleaned
+
+        return None
+
+    except Exception as e:
+        print(f"[ADVICE GROQ ERROR] {e}")
+        return None
+
+def get_fallback_trading_advice() -> str:
+    """Simple general trading advice fallbacks"""
+    fallbacks = [
+        "One of the hardest lessons to learn in trading is that sometimes doing nothing is the best position you can have. Overtrading kills more accounts than bad strategy ever will.\n\nWait for your setups to form clearly. If you have to force a reason to take a trade, you shouldn't be taking it.",
+        "Risk management is literally everything. You can have a win rate of 30% and still be consistently profitable if your losers are small and your winners are left to run.\n\nDon't get married to a position. If it hits your invalidation level, cut it. Hoping for a reversal is a guaranteed way to blow an account slowly.",
+        "A lot of new traders focus heavily on finding the 'perfect' entry indicator. The truth is your exit strategy and position sizing are far more important.\n\nIf you size correctly, you remove the emotional attachment to the trade. That's when you start making rational decisions instead of fear-based ones.",
+        "Market psychology isn't just about reading the crowd; it's mostly about managing yourself. When you take a loss, the immediate urge is to 'revenge trade' and make it back. Walk away. \n\nProtect your mental capital just as much as your financial capital. A clear head is your biggest edge in these markets."
+    ]
+    return random.choice(fallbacks)
+
 # ==================== DISCORD SENDER ====================
 class DiscordUserSender:
     def __init__(self):
@@ -348,7 +411,7 @@ class DiscordUserSender:
             print(f"[VERIFY ERROR] {e}")
             return False
 
-    async def send_text_message(self, text: str) -> Tuple[bool, str]:
+    async def send_text_message(self, text: str, channel_id: str = ANALYSIS_CHANNEL_ID) -> Tuple[bool, str]:
         safe, reason = self.safety.check_request_safety()
         if not safe:
             await self.safety.cooldown(reason)
@@ -360,10 +423,11 @@ class DiscordUserSender:
             return False, "NOT_LOGGED_IN"
 
         await self.safety.pre_request_delay()
-        url = f"https://discord.com/api/v9/channels/{ANALYSIS_CHANNEL_ID}/messages"
+        url = f"https://discord.com/api/v9/channels/{channel_id}/messages"
 
         try:
-            print(f"[TEXT] Sending ({len(text)} chars): {text[:60]}...")
+            preview_len = min(60, len(text))
+            print(f"[TEXT] Sending ({len(text)} chars) to {channel_id}: {text[:preview_len]}...")
             data = {"content": text, "tts": False, "flags": 0}
             headers = dict(self.session._default_headers)
             headers["User-Agent"] = self.safety.get_user_agent()
@@ -385,7 +449,7 @@ class DiscordUserSender:
             self.total_failures += 1
             return False, f"ERROR:{str(e)}"
 
-    async def send_message_with_image(self, text: str, image_path: str) -> Tuple[bool, str]:
+    async def send_message_with_image(self, text: str, image_path: str, channel_id: str = ANALYSIS_CHANNEL_ID) -> Tuple[bool, str]:
         safe, reason = self.safety.check_request_safety()
         if not safe:
             await self.safety.cooldown(reason)
@@ -397,13 +461,13 @@ class DiscordUserSender:
             return False, "NOT_LOGGED_IN"
 
         await self.safety.pre_request_delay()
-        success, result = await self._try_send_with_image(text, image_path, is_retry=False)
+        success, result = await self._try_send_with_image(text, image_path, channel_id, is_retry=False)
 
         if not success and ("400" in result or "JSON" in result or "IMAGE_ERROR" in result):
             print("[RETRY] Trying with sanitized filename...")
             temp_path = create_temp_screenshot(image_path)
             if temp_path:
-                success, result = await self._try_send_with_image(text, temp_path, is_retry=True)
+                success, result = await self._try_send_with_image(text, temp_path, channel_id, is_retry=True)
                 try:
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
@@ -420,8 +484,8 @@ class DiscordUserSender:
 
         return success, result
 
-    async def _try_send_with_image(self, text: str, image_path: str, is_retry: bool) -> Tuple[bool, str]:
-        url = f"https://discord.com/api/v9/channels/{ANALYSIS_CHANNEL_ID}/messages"
+    async def _try_send_with_image(self, text: str, image_path: str, channel_id: str, is_retry: bool) -> Tuple[bool, str]:
+        url = f"https://discord.com/api/v9/channels/{channel_id}/messages"
         try:
             if not os.path.exists(image_path):
                 print(f"[ERROR] Image not found: {image_path}")
@@ -515,46 +579,12 @@ class DiscordUserSender:
         print(f"[STATS] Daily: {stats['daily_requests']}")
 
 # ==================== MAIN BOT LOOP ====================
-async def main():
-    print("\n" + "="*60)
-    print("DISCORD BOT — GENERIC MARKET COMMENTARY (Groq Edition)")
-    print("="*60)
-    print(f"Channel  : {ANALYSIS_CHANNEL_ID}")
-    print(f"Model    : {MODEL_NAME} via Groq")
-    print(f"Interval : 2.5-3 minutes")
-    print(f"Speed    : {MAX_REQUESTS_PER_HOUR} requests per hour")
-    print(f"Min gap  : {MIN_REQUEST_GAP} seconds")
-    print("="*60)
-
-    if not USER_TOKEN:
-        print("\n[ERROR] USER_TOKEN is not set! Set it as an environment variable.")
-        return
-
-    if not GROQ_API_KEY:
-        print("[WARNING] GROQ_API_KEY not set — will use fallback messages only (no AI).")
-
-    sender = DiscordUserSender()
-    if not await sender.start():
-        return
-
-    if not await sender.verify_connection():
-        print("[ERROR] Cannot connect to Discord. Check your USER_TOKEN!")
-        await sender.close()
-        return
-
-    post_count   = 0
-    use_images   = bool(SCREENSHOT_FOLDER)
-    session_start = datetime.now()
-
-    print(f"\n[✓] Started at {session_start.strftime('%I:%M %p')}")
-    print("[✓] GENERIC commentary only (no pair mentions)")
-    print("[✓] Press Ctrl+C to stop")
-    print("-" * 60)
-
+async def commentary_loop(sender: DiscordUserSender, use_images: bool):
+    post_count = 0
     while True:
         post_count += 1
         current_time = datetime.now().strftime('%I:%M:%S %p')
-        print(f"\n[#{post_count}] {current_time}")
+        print(f"\n[#{post_count} COMMENTARY] {current_time}")
         print("-" * 40)
 
         try:
@@ -584,23 +614,22 @@ async def main():
 
             print("[3] Sending message...")
             if screenshot and use_images:
-                success, result = await sender.send_message_with_image(analysis, screenshot)
+                success, result = await sender.send_message_with_image(analysis, screenshot, ANALYSIS_CHANNEL_ID)
                 if not success and ("BAD_REQUEST" in result or "400" in result):
                     use_images = False
                     print("[FALLBACK] Trying text-only...")
-                    success, result = await sender.send_text_message(analysis)
+                    success, result = await sender.send_text_message(analysis, ANALYSIS_CHANNEL_ID)
             else:
-                success, result = await sender.send_text_message(analysis)
+                success, result = await sender.send_text_message(analysis, ANALYSIS_CHANNEL_ID)
 
             if success:
                 print("    ✅ Success! Generic message sent")
             else:
                 if "LOGGED_OUT" in result:
-                    print("\n❌ ACCOUNT LOGGED OUT! Stopping...")
+                    print("\n❌ ACCOUNT LOGGED OUT! Stopping commentary loop...")
                     break
                 print(f"    ❌ Failed: {result}")
 
-            # Wait 2.5-3 minutes before next post
             base_wait = random.uniform(MIN_INTERVAL, MAX_INTERVAL)
             if random.random() < 0.15:
                 variance = random.uniform(-30, 30)
@@ -611,41 +640,122 @@ async def main():
             if base_wait < 120:
                 base_wait = 120
 
-            next_time   = datetime.now() + timedelta(seconds=base_wait)
+            next_time = datetime.now() + timedelta(seconds=base_wait)
             wait_minutes = base_wait / 60
-            print(f"\n[4] Next post: {next_time.strftime('%I:%M %p')}")
+            print(f"\n[4] Next commentary post: {next_time.strftime('%I:%M %p')}")
             print(f"    Waiting {wait_minutes:.1f} minutes...")
 
-            remaining  = int(base_wait)
+            remaining = int(base_wait)
             last_update = 0
             while remaining > 0:
                 if remaining <= 30 or (last_update - remaining) >= 30:
-                    minutes = remaining // 60
-                    seconds = remaining % 60
-                    print(f"    {minutes}m {seconds}s remaining", end='\r')
                     last_update = remaining
                 await asyncio.sleep(1)
                 remaining -= 1
 
-            print()
             print("-" * 40)
 
-        except KeyboardInterrupt:
-            print("\n\n[!] Stopping...")
-            break
         except Exception as e:
-            print(f"\n[!] Error: {e}")
-            print("[!] Waiting 2 minutes before retry...")
-            await asyncio.sleep(120)
+            print(f"\n[!] Commentary Loop Error: {e}")
+            await asyncio.sleep(60)
 
-    await sender.close()
-    session_end = datetime.now()
-    duration = session_end - session_start
-    hours   = duration.seconds // 3600
-    minutes = (duration.seconds % 3600) // 60
-    print(f"\n[✓] Bot stopped after {hours}h {minutes}m")
-    print(f"[✓] Total attempts: {post_count}")
-    print(f"[✓] Success rate:   {sender.total_success}/{post_count}")
+async def advice_loop(sender: DiscordUserSender):
+    post_count = 0
+    if not ADVICE_CHANNEL_ID:
+        print("[ADVICE] No ADVICE_CHANNEL_ID configured. Advice loop stopping.")
+        return
+
+    while True:
+        post_count += 1
+        current_time = datetime.now().strftime('%I:%M:%S %p')
+        print(f"\n[#{post_count} ADVICE] {current_time}")
+        print("-" * 40)
+
+        try:
+            print("[1] Generating trading advice via Groq...")
+            await asyncio.sleep(random.uniform(1, 2))
+            advice = await get_trading_advice()
+
+            if not advice:
+                advice = get_fallback_trading_advice()
+                print(f"    Fallback Advice: {advice[:80]}...")
+            else:
+                print(f"    Groq Advice: {advice[:80]}...")
+
+            print("[2] Sending advice message...")
+            success, result = await sender.send_text_message(advice, ADVICE_CHANNEL_ID)
+
+            if success:
+                print("    ✅ Success! Trading advice sent")
+            else:
+                if "LOGGED_OUT" in result:
+                    print("\n❌ ACCOUNT LOGGED OUT! Stopping advice loop...")
+                    break
+                print(f"    ❌ Failed: {result}")
+
+            base_wait = random.uniform(ADVICE_MIN_INTERVAL, ADVICE_MAX_INTERVAL)
+            next_time = datetime.now() + timedelta(seconds=base_wait)
+            wait_minutes = base_wait / 60
+            print(f"\n[3] Next advice post: {next_time.strftime('%I:%M %p')}")
+            print(f"    Waiting {wait_minutes:.1f} minutes...")
+
+            remaining = int(base_wait)
+            while remaining > 0:
+                await asyncio.sleep(1)
+                remaining -= 1
+
+            print("-" * 40)
+
+        except Exception as e:
+            print(f"\n[!] Advice Loop Error: {e}")
+            await asyncio.sleep(60)
+
+# ==================== MAIN BOT ENTRY ====================
+async def main():
+    print("\n" + "="*60)
+    print("DISCORD BOT — COMMENTARY & TRADING ADVICE (Groq Edition)")
+    print("="*60)
+    print(f"Commentary Channel : {ANALYSIS_CHANNEL_ID}")
+    print(f"Advice Channel     : {ADVICE_CHANNEL_ID}")
+    print(f"Model              : {MODEL_NAME} via Groq")
+    print("="*60)
+
+    if not USER_TOKEN:
+        print("\n[ERROR] USER_TOKEN is not set! Set it as an environment variable.")
+        return
+
+    if not GROQ_API_KEY:
+        print("[WARNING] GROQ_API_KEY not set — will use fallback messages only (no AI).")
+
+    sender = DiscordUserSender()
+    if not await sender.start():
+        return
+
+    if not await sender.verify_connection():
+        print("[ERROR] Cannot connect to Discord. Check your USER_TOKEN!")
+        await sender.close()
+        return
+
+    use_images = bool(SCREENSHOT_FOLDER)
+    session_start = datetime.now()
+
+    print(f"\n[✓] Started at {session_start.strftime('%I:%M %p')}")
+    print("[✓] Running concurrent commentary & advice loops")
+    print("[✓] Press Ctrl+C to stop")
+    print("-" * 60)
+
+    try:
+        # Run both tasks concurrently
+        await asyncio.gather(
+            commentary_loop(sender, use_images),
+            advice_loop(sender)
+        )
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        print(f"[!] Main loop fatal error: {e}")
+    finally:
+        await sender.close()
 
 # ==================== ENTRY POINT ====================
 if __name__ == "__main__":
