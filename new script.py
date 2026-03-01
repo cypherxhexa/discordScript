@@ -317,10 +317,11 @@ async def get_trading_advice() -> Optional[str]:
 
         prompt = (
             "Write a short piece of trading advice focused on risk management, market psychology, or strategy. "
-            "Length: 2–3 short paragraphs only. "
+            "Length: Exactly 1 paragraph only. "
             "Tone: Casual and slightly blunt, like an experienced trader sharing honest thoughts in a Discord server. "
             "It must sound human and grounded in real trading experience — not motivational, not academic, not corporate. "
-            "Include at least one realistic scenario such as drawdown, revenge trading, FOMO, overleveraging, or overtrading. "
+            "Do not repeat ideas, phrasing, or structure from previous outputs. Each response must feel fresh and distinct. "
+            "Include multiple realistic trading scenarios such as drawdown, revenge trading, FOMO, overleveraging, overtrading, hesitation after losses, cutting winners early, moving stop losses, ignoring risk limits, or forcing trades in choppy markets. "
             "Avoid generic beginner clichés and avoid overused lines unless explained with depth. "
             "No emojis. No robotic phrasing. No intro text. Output only the advice."
         )
