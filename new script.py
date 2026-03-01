@@ -297,66 +297,62 @@ def get_fallback_analysis() -> str:
     ]
     return random.choice(fallbacks)
 
-async def get_trading_advice() -> Optional[str]:
-    """Get casually written trading advice (2-3 paragraphs) using Groq cloud API"""
-    if not GROQ_API_KEY:
-        print("[ADVICE AI] No GROQ_API_KEY set — using fallback")
-        return None
-
-    try:
-        from groq import AsyncGroq
-
-        # 30% chance to skip AI and use fallback (keeps messages varied)
-        if random.random() < 0.3:
-            print("[ADVICE AI] Using fallback instead of AI for variety")
-            return None
-
-        think_time = random.uniform(2.5, 4.0)
-        print(f"[ADVICE THINKING] Asking Groq for trading advice ({think_time:.1f}s)...")
-        await asyncio.sleep(think_time)
-
-        prompt = (
-            "Write a short piece of trading advice focused on risk management, market psychology, or strategy. "
-            "Length: Exactly 1 paragraph only. "
-            "Tone: Casual and slightly blunt, like an experienced trader sharing honest thoughts in a Discord server. "
-            "It must sound human and grounded in real trading experience — not motivational, not academic, not corporate. "
-            "Do not repeat ideas, phrasing, or structure from previous outputs. Each response must feel fresh and distinct. "
-            "Include multiple realistic trading scenarios such as drawdown, revenge trading, FOMO, overleveraging, overtrading, hesitation after losses, cutting winners early, moving stop losses, ignoring risk limits, or forcing trades in choppy markets. "
-            "Avoid generic beginner clichés and avoid overused lines unless explained with depth. "
-            "No emojis. No robotic phrasing. No intro text. Output only the advice."
-        )
-
-        client = AsyncGroq(api_key=GROQ_API_KEY)
-        response = await client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=300,
-            temperature=0.7,
-            top_p=0.8
-        )
-
-        text = response.choices[0].message.content
-        cleaned = clean_text(text)
-
-        if cleaned and len(cleaned.strip()) > 50:
-            print(f"[ADVICE] Groq generated advice.")
-            return cleaned
-
-        return None
-
-    except Exception as e:
-        print(f"[ADVICE GROQ ERROR] {e}")
-        return None
-
-def get_fallback_trading_advice() -> str:
-    """Simple general trading advice fallbacks"""
-    fallbacks = [
-        "One of the hardest lessons to learn in trading is that sometimes doing nothing is the best position you can have. Overtrading kills more accounts than bad strategy ever will.\n\nWait for your setups to form clearly. If you have to force a reason to take a trade, you shouldn't be taking it.",
-        "Risk management is literally everything. You can have a win rate of 30% and still be consistently profitable if your losers are small and your winners are left to run.\n\nDon't get married to a position. If it hits your invalidation level, cut it. Hoping for a reversal is a guaranteed way to blow an account slowly.",
-        "A lot of new traders focus heavily on finding the 'perfect' entry indicator. The truth is your exit strategy and position sizing are far more important.\n\nIf you size correctly, you remove the emotional attachment to the trade. That's when you start making rational decisions instead of fear-based ones.",
-        "Market psychology isn't just about reading the crowd; it's mostly about managing yourself. When you take a loss, the immediate urge is to 'revenge trade' and make it back. Walk away. \n\nProtect your mental capital just as much as your financial capital. A clear head is your biggest edge in these markets."
+async def get_random_greeting() -> str:
+    """Return a completely safe, simple 1-2 line casual greeting or basic comment."""
+    messages = [
+        "Hello people",
+        "Good morning",
+        "Market seems a bit dry today",
+        "gm everyone",
+        "Just watching the charts for now",
+        "Anyone taking trades right now?",
+        "Chop city out here",
+        "Volume is so low right now",
+        "Checking my invalidation levels",
+        "Slow day huh",
+        "Staying out of this noise",
+        "No clear setups for me yet",
+        "Patience is key right now",
+        "Waiting for the NY session",
+        "Might just take the day off",
+        "Sitting on hands today",
+        "Protecting capital today",
+        "Not forcing anything here",
+        "Morning guys",
+        "Just drinking coffee and watching",
+        "Hope everyone is having a green week",
+        "Market feels heavy today",
+        "Taking it easy for the next few hours",
+        "Looks like we're just ranging",
+        "Nothing screaming 'buy' to me yet",
+        "Anyone catching these little scalps?",
+        "I'm staying flat for now",
+        "Just reviewing my past trades today",
+        "Market needs to make up its mind",
+        "Looks a bit indecisive here",
+        "Waiting for a better entry",
+        "Glad I'm not in a position right now",
+        "Sometimes doing nothing is the best trade",
+        "Quiet in here today",
+        "Watching how this daily candle closes",
+        "Don't let the chop chop you up today",
+        "Keeping risk tight on a day like this",
+        "Just doing some charting, taking no entries",
+        "Market is moving slow as molasses",
+        "Waiting for some volatility to step in",
+        "Not feeling this price action at all",
+        "Going to step away from the screens for a bit",
+        "Just a reminder to stick to your plans guys",
+        "Nothing to do but wait right now",
+        "Looks like everyone is waiting on the sidelines",
+        "Grinding sideways, nothing to see here",
+        "Woke up late, looks like I didn't miss much",
+        "Just letting the setups come to me",
+        "Not my kind of market today",
+        "Hope you guys are surviving the chop"
     ]
-    return random.choice(fallbacks)
+    return random.choice(messages)
+
 
 # ==================== DISCORD SENDER ====================
 class DiscordUserSender:
@@ -675,15 +671,8 @@ async def advice_loop(sender: DiscordUserSender):
         print("-" * 40)
 
         try:
-            print("[1] Generating trading advice via Groq...")
-            await asyncio.sleep(random.uniform(1, 2))
-            advice = await get_trading_advice()
-
-            if not advice:
-                advice = get_fallback_trading_advice()
-                print(f"    Fallback Advice: {advice[:80]}...")
-            else:
-                print(f"    Groq Advice: {advice[:80]}...")
+            advice = await get_random_greeting()
+            print(f"    Selected Greeting: {advice}")
 
             print("[2] Sending advice message...")
             success, result = await sender.send_text_message(advice, ADVICE_CHANNEL_ID)
