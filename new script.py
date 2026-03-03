@@ -26,7 +26,7 @@ MODEL_NAME = "llama-3.3-70b-versatile"
 # ==================== FAST MODE SETTINGS ====================
 MIN_INTERVAL         = 150   # 2.5 minutes (150 seconds)
 MAX_INTERVAL         = 180   # 3 minutes (180 seconds)
-MAX_REQUESTS_PER_HOUR = 24   # ~1 per 2.5 minutes = 24 per hour
+MAX_REQUESTS_PER_HOUR = 40   # increased to accommodate both loops
 MIN_REQUEST_GAP      = 20    # 20 seconds between requests
 
 # ==================== TRADING ADVICE SETTINGS ====================
@@ -274,82 +274,82 @@ async def get_groq_analysis() -> Optional[str]:
 def get_fallback_analysis() -> str:
     """Simple generic fallbacks — NO PAIR MENTIONS"""
     fallbacks = [
-        "Quiet session so far, just letting the setup breathe.",
-        "Nothing worth forcing today, sitting on hands for now.",
-        "Whipsaw action right now. Best to just watch from the sidelines.",
-        "Volume is slowly drying up. Waiting for a real break in structure.",
-        "Classic low-conviction chop. Don't let impatience cost you.",
-        "Holding steady for the moment. The real move hasn't tipped its hand yet.",
-        "Slow grind today. Letting the higher timeframes dictate the bias.",
-        "Just a whole lot of noise at these levels. Patience pays.",
-        "Testing some key zones, but no follow-through volume just yet.",
-        "Market's just breathing right now. Invalidation levels are clear.",
-        "A bit of a dead zone here. No need to step in front of this chop.",
-        "Trend is intact, just a routine consolidation phase right now.",
-        "Boring markets are meant for capital preservation. Staying disciplined.",
-        "Action is pretty muted. Waiting for the market to actually show its hand.",
-        "Classic sideways grind. Sometimes no trade is the best trade.",
-        "Respecting the range until we get a clean close outside of it.",
-        "Looks like we're just building a base here. Keeping risk tight.",
-        "Volume's thin. Easy to get trapped trying to front-run this.",
-        "Just another day of range-bound chop. Keep your charts clean.",
-        "Not much edge in this current chop. Waiting for the dust to settle."
+        "Pretty standard session, nothing special happening.",
+        "Low energy across the board, just observing for now.",
+        "Ranges are tightening up, could get interesting soon.",
+        "Liquidity looks thin, not ideal for big moves.",
+        "Holding patterns everywhere, no real conviction.",
+        "Wicks are telling a story but price isn't following through.",
+        "Clean levels are being respected, just no momentum yet.",
+        "Feels like everyone is waiting for the same trigger.",
+        "Structure looks decent, just missing the catalyst.",
+        "Sellers showed up briefly but couldn't follow through.",
+        "Buyers are stepping in at key zones, keeping things afloat.",
+        "Typical pre-session drift, nothing to read into.",
+        "Order flow is balanced, no clear edge either way.",
+        "Compression building, usually leads to something eventually.",
+        "Slow rotations within the range, textbook distribution.",
+        "Watching for a flush before any real opportunity shows up.",
+        "Dull session but the levels are clean for tomorrow.",
+        "Not enough participation to trust any breakout right now.",
+        "Market structure intact, just digesting the last move.",
+        "Tight range day, saving energy for the real play."
     ]
     return random.choice(fallbacks)
 
 async def get_random_greeting() -> str:
     """Return a completely safe, simple 1-2 line casual greeting or basic comment."""
     messages = [
-        "Hello people",
-        "Good morning",
-        "Market seems a bit dry today",
-        "gm everyone",
-        "Just watching the charts for now",
-        "Anyone taking trades right now?",
-        "Chop city out here",
-        "Volume is so low right now",
-        "Checking my invalidation levels",
-        "Slow day huh",
-        "Staying out of this noise",
-        "No clear setups for me yet",
-        "Patience is key right now",
-        "Waiting for the NY session",
-        "Might just take the day off",
-        "Sitting on hands today",
-        "Protecting capital today",
-        "Not forcing anything here",
-        "Morning guys",
-        "Just drinking coffee and watching",
-        "Hope everyone is having a green week",
-        "Market feels heavy today",
-        "Taking it easy for the next few hours",
-        "Looks like we're just ranging",
-        "Nothing screaming 'buy' to me yet",
-        "Anyone catching these little scalps?",
-        "I'm staying flat for now",
-        "Just reviewing my past trades today",
-        "Market needs to make up its mind",
-        "Looks a bit indecisive here",
-        "Waiting for a better entry",
-        "Glad I'm not in a position right now",
-        "Sometimes doing nothing is the best trade",
-        "Quiet in here today",
-        "Watching how this daily candle closes",
-        "Don't let the chop chop you up today",
-        "Keeping risk tight on a day like this",
-        "Just doing some charting, taking no entries",
-        "Market is moving slow as molasses",
-        "Waiting for some volatility to step in",
-        "Not feeling this price action at all",
-        "Going to step away from the screens for a bit",
-        "Just a reminder to stick to your plans guys",
-        "Nothing to do but wait right now",
-        "Looks like everyone is waiting on the sidelines",
-        "Grinding sideways, nothing to see here",
-        "Woke up late, looks like I didn't miss much",
-        "Just letting the setups come to me",
-        "Not my kind of market today",
-        "Hope you guys are surviving the chop"
+        "Hey what's good",
+        "Afternoon everyone",
+        "Charts looking boring today ngl",
+        "gm gm",
+        "Just pulled up the screens",
+        "Anything moving out there?",
+        "Dead zone right now",
+        "Barely any ticks on the tape",
+        "Marked up my levels, now I wait",
+        "Flat day so far",
+        "Sitting this one out",
+        "My edge isn't showing up today",
+        "Discipline over everything",
+        "London was a snooze, hoping NY delivers",
+        "Might close the laptop early",
+        "Hands off the buy button today",
+        "Cash is a position too",
+        "No reason to be aggressive here",
+        "Hey guys",
+        "Second coffee and still nothing lol",
+        "Hope the week is treating you well",
+        "Price feels like it wants to drop",
+        "Chilling for the next couple hours",
+        "Just ping ponging between levels",
+        "Nothing convincing on the long side yet",
+        "Anyone playing these swings?",
+        "Zero exposure right now",
+        "Going through my trade journal instead",
+        "Pick a direction already",
+        "Mixed signals everywhere",
+        "Need a proper breakout before I care",
+        "Happy I didn't chase that move earlier",
+        "Best trade today is no trade",
+        "Not much going on huh",
+        "Curious how the 4h closes",
+        "This chop will eat you alive if you let it",
+        "Small size or no size on days like this",
+        "Drawing lines on my chart, that's about it",
+        "Slower than a Monday morning",
+        "Need some real volume to push this",
+        "This price action is putting me to sleep",
+        "Gonna take a walk, screens aren't going anywhere",
+        "Reminder: your plan exists for a reason",
+        "Just waiting it out",
+        "Whole market is in chill mode",
+        "Sideways is the theme of the week apparently",
+        "Slept through Asia session, didn't miss a thing",
+        "Setups will come, not gonna force em",
+        "Not vibing with this tape at all",
+        "Hang in there everyone"
     ]
     return random.choice(messages)
 
@@ -410,11 +410,12 @@ class DiscordUserSender:
             print(f"[VERIFY ERROR] {e}")
             return False
 
-    async def send_text_message(self, text: str, channel_id: str = ANALYSIS_CHANNEL_ID) -> Tuple[bool, str]:
-        safe, reason = self.safety.check_request_safety()
-        if not safe:
-            await self.safety.cooldown(reason)
-            return False, reason
+    async def send_text_message(self, text: str, channel_id: str = ANALYSIS_CHANNEL_ID, skip_safety: bool = False) -> Tuple[bool, str]:
+        if not skip_safety:
+            safe, reason = self.safety.check_request_safety()
+            if not safe:
+                await self.safety.cooldown(reason)
+                return False, reason
 
         if not await self.verify_connection():
             print("[ERROR] Not logged in!")
@@ -675,7 +676,7 @@ async def advice_loop(sender: DiscordUserSender):
             print(f"    Selected Greeting: {advice}")
 
             print("[2] Sending advice message...")
-            success, result = await sender.send_text_message(advice, ADVICE_CHANNEL_ID)
+            success, result = await sender.send_text_message(advice, ADVICE_CHANNEL_ID, skip_safety=True)
 
             if success:
                 print("    ✅ Success! Trading advice sent")
